@@ -19,6 +19,9 @@
  
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <assert.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -31,53 +34,103 @@
 #define VERSION_MINOR 0 /* Minor version. */
 
 /* Program arguments. */
-static char *const *filenames; /* Files to concatenate.           */
-static int nfiles = 0;         /* Number of files to concatenate. */
+static char *const *filenames; /* Files to sort.           */
+static int nfiles = 0;         /* Number of files to sort. */
 
 /* Bubble sort starts here*/
 
-void swap(int *xp, int *yp)
+static void swap(char* *xp, char* *yp)
 {
-    int temp = *xp;
+    char* temp = *xp;
     *xp = *yp;
     *yp = temp;
 }
   
 // A function to implement bubble sort
-void bubbleSort(char* arr[], int n)
+static void bubble_sort(char* lines[], int nlines)
 {
-   int i, j;
-   for (i = 0; i < n-1; i++)      
-  
-       // Last i elements are already in place   
-       for (j = 0; j < n-i-1; j++) 
-           if (arr[j] > arr[j+1])
-              swap(&arr[j], &arr[j+1]);
+//puts("bubble sorting...");
+	int i, j;
+	for (i = 0; i < nlines - 1; i++)
+	{
+		// Last i elements are already in place   
+		for (j = 0; j < nlines - i - 1; j++)
+		{ 
+			if (strcmp(lines[j], lines[j + 1]) > 0)
+              			swap(lines + j, lines + j + 1);
+		}
+	}
 }
 
 /*Bubble sort ends here*/
 
-void split_line(char* output[], char* input, int n){
-	int line_break = 0;
+/* for test purposes */
+static void print_lines(char* lines[], int nlines)
+{
+printf("printing %d lines...\n", nlines);
+assert(lines != NULL);
+//	for (int i = 0; i < nlines; i++)
+//	{
+//		printf("line %d: %s\n", i + 1, lines[i]);
+//	}
+}
+
+static int split_lines(char* *output[], char* input, int n){
+//puts("spliting lines...");
+//printf("input:\n%s\n", input);
+	char* *lines;
+	int nlines = 0;
 	for (int i = 0; i < n; i++){
 		if(input[i] == '\n')
-			line_break++;
+			nlines++;
 	}
-	output = malloc(sizeof(char*)*(line_break + 1))
+//printf("detected %d lines\n", nlines);
+	*output = lines = malloc(sizeof(char*)*nlines);
+	assert(lines != NULL);
 	int j = 0;
 	int line = 0;
-	for(int i = 0; i < n; i++){
-		if(input[i] == '\n'){
-			int count = i - j + 1;
+	for(int i = 0; i < n; i++)
+	{
+		/* here ends a line */
+		if(input[i] == '\n')
+		{
+//printf("copying line %d\n", line + 1);
+assert(line < nlines);
+			/* ignores '\n' */
+			int count = i - j;
+
+			/* +1 for terminating '\0'  */
+			lines[line] = malloc(sizeof(char)*(count + 1));
+			assert(lines[line] != NULL);
+
+			strncpy(lines[line], input + j, count);
+//printf("line %d: %s", line + 1, lines[line]);	
+			
 			line++;
-			output[line] = malloc(sizeof(char)*(count + 1));
 			j = i + 1;
 		}
-		memcopy(output[line], input + j, count);
-		output[line][count] = 0;
-	
 	}
-	return output;
+
+//print_lines(lines, nlines);
+	return nlines;
+}
+
+static int join_lines(char *output,  char* input[], int nlines){
+//puts("joining lines...");
+	int len = 0;
+//	buf[0] = '\0'; // for strcat()
+	for (int i = 0; i < nlines; i++)
+	{
+		/* 
+                 * strcat() would be less efficient, 
+                 * as it always reads entire destination string 
+                 */
+		int nwritten = sprintf(output + len, "%s\n", input[i]);
+		len += nwritten;
+	}
+
+//puts(output);
+	return len;
 }
 
 /*
@@ -105,27 +158,36 @@ static void sort(char *filename)
 	{	
 		/* Error while reading. */
 		if ((nread = read(fd, buf, BUFSIZ)) < 0)
-			fprintf(stderr, "sort: cannot read %s\n", filename);
+			fprintf(stderr, "sort: cannot read %s\n", filename);	
+printf("\nBUFSIZ: %d\tnread: %ld\n", BUFSIZ, nread);	
+		n = nread;
+		char* *lines;
+		int nlines = split_lines(&lines, buf, n);
+//puts("input lines:");
+//print_lines(lines, nlines);
 		
 		/*Bubble Sort*/
-		
-		n = nread;
+		bubble_sort(lines, nlines);
+puts("ordered lines:");
+print_lines(lines, nlines);
 
-		bubbleSort(buf, n);
+		join_lines(buf, lines, nlines);
+
+//		bubbleSort(buf, n);
 		
-		off = 0;
-		do
-		{
-			nwritten = write(fileno(stdout), &buf[off], nread);
-			
-			/* Failed to write. */
-			if (nwritten < 0)
-			{
-				fprintf(stderr, "sort: write error\n");
-				exit(errno);
-			}
-			off += nwritten;
-		} while ((nread -= nwritten) > 0);
+//		off = 0;
+//		do
+//		{
+//			nwritten = write(fileno(stdout), &buf[off], nread);
+//			
+//			/* Failed to write. */
+//			if (nwritten < 0)
+//			{
+//				fprintf(stderr, "sort: write error\n");
+//				exit(errno);
+//			}
+//			off += nwritten;
+//		} while ((nread -= nwritten) > 0);
 	} while (n == BUFSIZ);	
 	
 	close(fd);
@@ -136,8 +198,8 @@ static void sort(char *filename)
  */
 static void version(void)
 {
-	printf("cat (Nanvix Coreutils) %d.%d\n\n", VERSION_MAJOR, VERSION_MINOR);
-	printf("Copyright(C) 2011-2014 Pedro H. Penna\n");
+	printf("sort %d.%d\n\n", VERSION_MAJOR, VERSION_MINOR);
+//	printf("Copyright(C) 2011-2014 Pedro H. Penna\n");
 	printf("This is free software under the "); 
 	printf("GNU General Public License Version 3.\n");
 	printf("There is NO WARRANTY, to the extent permitted by law.\n\n");
@@ -150,8 +212,8 @@ static void version(void)
  */
 static void usage(void)
 {
-	printf("Usage: cat [options] [files]\n\n");
-	printf("Brief: Concatenates files.\n\n");
+	printf("Usage: sort [options] [files]\n\n");
+	printf("Brief: Sorts files.\n\n");
 	printf("Options:\n");
 	printf("  --help    Display this information and exit\n");
 	printf("  --version Display program version and exit\n");
@@ -190,7 +252,7 @@ static void getargs(int argc, char *const argv[])
 }
 
 /*
- * Concatenates files. 
+ * Sorts files. 
  */
 int main(int argc, char *const argv[])
 {	
@@ -200,18 +262,18 @@ int main(int argc, char *const argv[])
 	
 	getargs(argc, argv);
 	
-	/* Concatenate standard input. */
+	/* Sort standard input. */
 	if (nfiles == 0)
-		cat("/dev/tty");
+		sort("/dev/tty");
 	
-	/* Concatenate files. */
+	/* Sort files. */
 	else
 	{
 		for (i = 0; i < nfiles; i++)
 		{
 			filename = filenames[i];
 			
-			/* Concatenate standard input. */
+			/* Sort standard input. */
 			if (!strcmp(filename, "-"))
 				filename = "/dev/tty";
 			
@@ -220,19 +282,19 @@ int main(int argc, char *const argv[])
 			{
 				if (stat(filename, &st) == -1)
 				{
-					fprintf(stderr, "cat: cannot stat %s\n", filename);
+					fprintf(stderr, "sort: cannot stat %s\n", filename);
 					continue;
 				}
 				
 				/* File is directory. */
 				if (S_ISDIR(st.st_mode))
 				{
-					fprintf(stderr, "cat: %s is a directory\n", filename);
+					fprintf(stderr, "sort: %s is a directory\n", filename);
 					continue;
 				}
 			}
 				
-			cat(filename);
+			sort(filename);
 		}
 	}
 	
