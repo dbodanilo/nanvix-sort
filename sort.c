@@ -1,8 +1,4 @@
 /*
- * Copyright(C) 2011-2016 Pedro H. Penna <pedrohenriquepenna@gmail.com>
- * 
- * This file is part of Nanvix.
- * 
  * Nanvix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -37,8 +33,7 @@
 static char *const *filenames; /* Files to sort.           */
 static int nfiles = 0;         /* Number of files to sort. */
 
-/* Bubble sort starts here*/
-
+/* Bubble sort starts here */
 static void swap(char* *xp, char* *yp)
 {
     char* temp = *xp;
@@ -46,10 +41,10 @@ static void swap(char* *xp, char* *yp)
     *yp = temp;
 }
   
-// A function to implement bubble sort
+/* A function to implement bubble sort */
 static void bubble_sort(char* lines[], int nlines)
 {
-//puts("bubble sorting...");
+/* puts("bubble sorting..."); */
 	int i, j;
 	for (i = 0; i < nlines - 1; i++)
 	{
@@ -61,19 +56,18 @@ static void bubble_sort(char* lines[], int nlines)
 		}
 	}
 }
-
-/*Bubble sort ends here*/
+/* Bubble sort ends here */
 
 /* for test purposes */
-static void print_lines(char* lines[], int nlines)
-{
-printf("printing %d lines...\n", nlines);
-assert(lines != NULL);
+// static void print_lines(char* lines[], int nlines)
+//{
+//printf("printing %d lines...\n", nlines);
+//assert(lines != NULL);
 //	for (int i = 0; i < nlines; i++)
 //	{
 //		printf("line %d: %s\n", i + 1, lines[i]);
 //	}
-}
+//}
 
 static int split_lines(char* *output[], char* input, int n){
 //puts("spliting lines...");
@@ -95,7 +89,7 @@ static int split_lines(char* *output[], char* input, int n){
 		if(input[i] == '\n')
 		{
 //printf("copying line %d\n", line + 1);
-assert(line < nlines);
+//assert(line < nlines);
 			/* ignores '\n' */
 			int count = i - j;
 
@@ -181,8 +175,8 @@ static void sort(char *filename)
 //puts("joined lines:");
 //puts(buf);
 
-		// can we sort the buffer directly?
-		//bubbleSort(buf, n);
+// can we sort the buffer directly?
+//bubbleSort(buf, n);
 		
 		off = 0;
 	      	do
