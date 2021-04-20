@@ -104,6 +104,8 @@ assert(line < nlines);
 			assert(lines[line] != NULL);
 
 			strncpy(lines[line], input + j, count);
+			/* as strncpy() does not null-terminate strings */
+                        strcpy(lines[line] + count, "");
 //printf("line %d: %s", line + 1, lines[line]);	
 			
 			line++;
@@ -115,7 +117,7 @@ assert(line < nlines);
 	return nlines;
 }
 
-static int join_lines(char *output,  char* input[], int nlines){
+static int join_lines(char *buffer,  char* lines[], int nlines){
 //puts("joining lines...");
 	int len = 0;
 //	buf[0] = '\0'; // for strcat()
@@ -123,10 +125,14 @@ static int join_lines(char *output,  char* input[], int nlines){
 	{
 		/* 
                  * strcat() would be less efficient, 
-                 * as it always reads entire destination string 
+                 * as it always reads entire destination string
+ 		 * sprintf() is not available in nanvix 
                  */
-		int nwritten = sprintf(output + len, "%s\n", input[i]);
-		len += nwritten;
+		ssize_t line_len = strlen(lines[i]);
+		strcpy(buffer + len, lines[i]);
+		len += line_len;
+		strcpy(buffer + len, "\n");
+		len += 1;
 	}
 
 //puts(output);
@@ -159,7 +165,7 @@ static void sort(char *filename)
 		/* Error while reading. */
 		if ((nread = read(fd, buf, BUFSIZ)) < 0)
 			fprintf(stderr, "sort: cannot read %s\n", filename);	
-printf("\nBUFSIZ: %d\tnread: %ld\n", BUFSIZ, nread);	
+//printf("\nBUFSIZ: %d\tnread: %ld\n", BUFSIZ, nread);
 		n = nread;
 		char* *lines;
 		int nlines = split_lines(&lines, buf, n);
@@ -168,26 +174,29 @@ printf("\nBUFSIZ: %d\tnread: %ld\n", BUFSIZ, nread);
 		
 		/*Bubble Sort*/
 		bubble_sort(lines, nlines);
-puts("ordered lines:");
-print_lines(lines, nlines);
+//puts("ordered lines:");
+//print_lines(lines, nlines);
 
 		join_lines(buf, lines, nlines);
+//puts("joined lines:");
+//puts(buf);
 
-//		bubbleSort(buf, n);
+		// can we sort the buffer directly?
+		//bubbleSort(buf, n);
 		
-//		off = 0;
-//		do
-//		{
-//			nwritten = write(fileno(stdout), &buf[off], nread);
-//			
-//			/* Failed to write. */
-//			if (nwritten < 0)
-//			{
-//				fprintf(stderr, "sort: write error\n");
-//				exit(errno);
-//			}
-//			off += nwritten;
-//		} while ((nread -= nwritten) > 0);
+		off = 0;
+	      	do
+		{
+			nwritten = write(fileno(stdout), &buf[off], nread);
+			
+			/* Failed to write. */
+			if (nwritten < 0)
+			{
+				fprintf(stderr, "sort: write error\n");
+				exit(errno);
+			}
+			off += nwritten;
+		} while ((nread -= nwritten) > 0);
 	} while (n == BUFSIZ);	
 	
 	close(fd);
