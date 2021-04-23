@@ -1,7 +1,11 @@
 /*
- * Copyright(C) 2011-2016 Pedro H. Penna <pedrohenriquepenna@gmail.com>
+ * Copyright(C) 2021 
  * 
- * This file is part of Nanvix.
+ * Danilo Bizarria 
+ * Markel Macedo
+ * Matheus Ferreira
+ * Rafael Lino
+ * 
  * 
  * Nanvix is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,15 +69,15 @@ static void bubble_sort(char* lines[], int nlines)
 /*Bubble sort ends here*/
 
 /* for test purposes */
-static void print_lines(char* lines[], int nlines)
-{
-printf("printing %d lines...\n", nlines);
-assert(lines != NULL);
+//static void print_lines(char* lines[], int nlines)
+//{
+//printf("printing %d lines...\n", nlines);
+//assert(lines != NULL);
 //	for (int i = 0; i < nlines; i++)
 //	{
 //		printf("line %d: %s\n", i + 1, lines[i]);
 //	}
-}
+//}
 
 static int split_lines(char* *output[], char* input, int n){
 //puts("spliting lines...");
